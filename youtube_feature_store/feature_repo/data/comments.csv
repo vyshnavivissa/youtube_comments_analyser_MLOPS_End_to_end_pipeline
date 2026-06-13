@@ -1,0 +1,4 @@
+comment_id,event_timestamp,comment_length,word_count,uppercase_ratio,exclamation_count
+1,2026-06-12 20:00:00,45,8,0.12,2
+2,2026-06-12 20:01:00,30,5,0.00,0
+3,2026-06-12 20:02:00,60,10,0.25,4

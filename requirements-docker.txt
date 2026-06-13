@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+joblib
+numpy
+pandas
+scikit-learn
+xgboost
+sentence-transformers
+pydantic
+youtube-comment-downloader
+wordcloud
+prometheus-client

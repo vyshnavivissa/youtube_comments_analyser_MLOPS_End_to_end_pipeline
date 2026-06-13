@@ -1,0 +1,9 @@
+venv311/
+venv/
+models/
+mlruns/
+__pycache__/
+*.pkl
+.dvc/cache/
+.vscode/
+static/wordcloud.png
