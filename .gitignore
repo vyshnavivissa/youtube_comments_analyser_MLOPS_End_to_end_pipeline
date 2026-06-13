@@ -7,3 +7,19 @@ __pycache__/
 .dvc/cache/
 .vscode/
 static/wordcloud.png
+# MLflow
+mlflow.db
+
+# Feast
+*.db
+
+# Models
+models/
+*.pkl
+
+# MLruns
+mlruns/
+
+# Virtual Env
+venv311/
+venv/

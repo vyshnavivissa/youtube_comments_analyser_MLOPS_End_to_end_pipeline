@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: youtube-comment-analyzer
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: youtube-comment-analyzer
+
+  template:
+    metadata:
+      labels:
+        app: youtube-comment-analyzer
+
+    spec:
+      containers:
+      - name: youtube-comment-analyzer
+        image: youtube-comment-analyzer:latest
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 8000

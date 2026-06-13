@@ -4,13 +4,19 @@ import mlflow
 import mlflow.sklearn
 
 from sentence_transformers import SentenceTransformer
-from sklearn.model_selection import train_test_split
+
+from sklearn.model_selection import (
+    train_test_split,
+    GridSearchCV
+)
+
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
     recall_score,
     f1_score
 )
+
 from sklearn.linear_model import LogisticRegression
 
 print("Loading Dataset...")
@@ -69,9 +75,38 @@ mlflow.set_experiment(
 
 with mlflow.start_run():
 
-    model = LogisticRegression(
-        max_iter=1000,
-        random_state=42
+    print("Starting Hyperparameter Tuning...")
+
+    param_grid = {
+        "C": [0.01, 0.1, 1, 10, 100],
+        "solver": ["liblinear", "lbfgs"],
+        "penalty": ["l2"]
+    }
+
+    grid_search = GridSearchCV(
+        estimator=LogisticRegression(
+            max_iter=2000,
+            random_state=42
+        ),
+        param_grid=param_grid,
+        cv=3,
+        scoring="accuracy",
+        n_jobs=-1,
+        verbose=2
+    )
+
+    grid_search.fit(
+        X_train,
+        y_train
+    )
+
+    model = grid_search.best_estimator_
+
+    print("\nBest Parameters:")
+    print(grid_search.best_params_)
+
+    print(
+        f"Best CV Score: {grid_search.best_score_:.4f}"
     )
 
     mlflow.log_param(
@@ -84,14 +119,22 @@ with mlflow.start_run():
         "SentenceTransformerEmbeddings"
     )
 
-    print("Training Logistic Regression...")
-
-    model.fit(
-        X_train,
-        y_train
+    mlflow.log_param(
+        "best_C",
+        grid_search.best_params_["C"]
     )
 
-    print("Predicting...")
+    mlflow.log_param(
+        "best_solver",
+        grid_search.best_params_["solver"]
+    )
+
+    mlflow.log_metric(
+        "best_cv_score",
+        grid_search.best_score_
+    )
+
+    print("Predicting on Test Data...")
 
     predictions = model.predict(
         X_test
@@ -117,15 +160,32 @@ with mlflow.start_run():
         predictions
     )
 
+    print("\nResults")
+    print("=" * 30)
     print(f"Accuracy : {accuracy:.4f}")
     print(f"Precision: {precision:.4f}")
     print(f"Recall   : {recall:.4f}")
     print(f"F1 Score : {f1:.4f}")
 
-    mlflow.log_metric("accuracy", accuracy)
-    mlflow.log_metric("precision", precision)
-    mlflow.log_metric("recall", recall)
-    mlflow.log_metric("f1_score", f1)
+    mlflow.log_metric(
+        "accuracy",
+        accuracy
+    )
+
+    mlflow.log_metric(
+        "precision",
+        precision
+    )
+
+    mlflow.log_metric(
+        "recall",
+        recall
+    )
+
+    mlflow.log_metric(
+        "f1_score",
+        f1
+    )
 
     mlflow.sklearn.log_model(
         model,
@@ -137,6 +197,7 @@ with mlflow.start_run():
         "models/logistic_regression_model.pkl"
     )
 
-    print("Model Saved!")
+    print("Model Saved Successfully!")
 
 print("MLflow Run Completed!")
+

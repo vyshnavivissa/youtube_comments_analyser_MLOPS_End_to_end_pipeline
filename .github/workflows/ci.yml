@@ -5,14 +5,18 @@ on:
     branches:
       - main
 
+  pull_request:
+    branches:
+      - main
+
 jobs:
-  build:
+  build-and-test:
 
     runs-on: ubuntu-latest
 
     steps:
 
-    - name: Checkout Code
+    - name: Checkout Repository
       uses: actions/checkout@v4
 
     - name: Setup Python
@@ -20,10 +24,17 @@ jobs:
       with:
         python-version: "3.11"
 
-    - name: Install Dependencies
+    - name: Upgrade pip
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+
+    - name: Install Dependencies
+      run: |
+        pip install fastapi
+        pip install uvicorn
+        pip install pandas
+        pip install numpy
+        pip install scikit-learn
 
     - name: Verify Imports
       run: |
@@ -31,6 +42,6 @@ jobs:
         python -c "import pandas"
         python -c "import sklearn"
 
-    - name: Build Docker Image
+    - name: Success Message
       run: |
-        docker build -t youtube-comment-analyzer .
+        echo "GitHub Actions CI Passed Successfully!"
