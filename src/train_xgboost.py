@@ -48,7 +48,7 @@ df = df.sample(
 print("Loading Embedding Model...")
 
 embedding_model = SentenceTransformer(
-    "sentence-transformers/all-MiniLM-L6-v2"
+    "paraphrase-multilingual-MiniLM-L12-v2"
 )
 
 print("Generating Embeddings...")

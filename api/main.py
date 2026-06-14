@@ -3,8 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
 from pydantic import BaseModel
-from prometheus_client import Counter, generate_latest
-from fastapi.responses import Response
+
 import joblib
 import numpy as np
 import os
@@ -25,7 +24,7 @@ model = joblib.load(
 print("Loading Embedding Model...")
 
 embedding_model = SentenceTransformer(
-    "sentence-transformers/all-MiniLM-L6-v2"
+    "paraphrase-multilingual-MiniLM-L12-v2"
 )
 
 print("Models Loaded Successfully!")
@@ -35,7 +34,10 @@ app = FastAPI(
     version="1.0"
 )
 
+# =========================
 # Prometheus Metrics
+# =========================
+
 prediction_counter = Counter(
     "predictions_total",
     "Total predictions made"
@@ -46,7 +48,25 @@ analyze_counter = Counter(
     "Total analyze requests"
 )
 
+successful_requests = Counter(
+    "successful_requests_total",
+    "Total successful requests"
+)
+
+positive_predictions = Counter(
+    "positive_predictions_total",
+    "Total positive predictions"
+)
+
+negative_predictions = Counter(
+    "negative_predictions_total",
+    "Total negative predictions"
+)
+
+# =========================
 # CORS
+# =========================
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -55,7 +75,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# =========================
 # Static Folder
+# =========================
+
 if not os.path.exists("static"):
     os.makedirs("static")
 
@@ -65,6 +88,9 @@ app.mount(
     name="static"
 )
 
+# =========================
+# Request Models
+# =========================
 
 class CommentRequest(BaseModel):
     text: str
@@ -74,12 +100,15 @@ class YouTubeRequest(BaseModel):
     youtube_url: str
 
 
+# =========================
+# Routes
+# =========================
+
 @app.get("/")
 def home():
     return {
         "message": "YouTube Comment Analyzer API Running"
     }
-
 
 
 @app.get("/metrics")
@@ -89,6 +118,10 @@ def metrics():
         media_type="text/plain"
     )
 
+
+# =========================
+# Single Comment Prediction
+# =========================
 
 @app.post("/predict")
 def predict(request: CommentRequest):
@@ -103,6 +136,13 @@ def predict(request: CommentRequest):
         embedding
     )[0]
 
+    successful_requests.inc()
+
+    if prediction == 1:
+        positive_predictions.inc()
+    else:
+        negative_predictions.inc()
+
     sentiment = (
         "Positive"
         if prediction == 1
@@ -114,6 +154,10 @@ def predict(request: CommentRequest):
         "sentiment": sentiment
     }
 
+
+# =========================
+# YouTube Comment Analysis
+# =========================
 
 @app.post("/analyze")
 def analyze(request: YouTubeRequest):
@@ -134,6 +178,11 @@ def analyze(request: YouTubeRequest):
         if len(comments) >= 100:
             break
 
+    if len(comments) == 0:
+        return {
+            "error": "No comments found"
+        }
+
     embeddings = embedding_model.encode(
         comments,
         show_progress_bar=False
@@ -152,6 +201,18 @@ def analyze(request: YouTubeRequest):
     )
 
     total = len(predictions)
+
+    prediction_counter.inc(total)
+
+    successful_requests.inc()
+
+    positive_predictions.inc(
+        positive
+    )
+
+    negative_predictions.inc(
+        negative
+    )
 
     # Generate Word Cloud
     text = " ".join(comments)

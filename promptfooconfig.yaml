@@ -1,0 +1,12 @@
+prompts:
+  - "Classify sentiment: {{comment}}"
+
+providers:
+  - echo
+
+tests:
+  - vars:
+      comment: "This video is amazing!"
+
+  - vars:
+      comment: "Worst video ever."
